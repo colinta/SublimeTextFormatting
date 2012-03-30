@@ -25,10 +25,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         if region.empty():
             region = self.view.line(region)
 
-        # there is an off-by-one error in the "look for a space" code.
-        maxlength += 1
-        # fixed!
-
         indent_regex = '^\s*(#|//)? *'
         selection = self.view.substr(region)
         lines = selection.splitlines()
@@ -79,6 +75,10 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         for line in lines:
             while current and len(current) > maxlength:
                 current, too_much = current[:maxlength], current[maxlength:]
+                if too_much and too_much[0] == ' ':
+                    current += ' '
+                    too_much = too_much[1:]
+
                 indent = re.match(indent_regex, current).group(0)
                 if ' ' in current:
                     space = current.rindex(' ')
