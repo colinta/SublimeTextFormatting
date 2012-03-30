@@ -26,5 +26,5 @@ Select a bunch of docstrings or README content and it will not just *warp* lines
 but it will also combine lines that are *too short*, so you can with aplomb
 and reformat when you're done.
 
-Also works with comments.  Lines that have `#`, `*` or `//` are considered part of the
+Also works with comments.  Lines that have `#` or `//` are considered part of the
 "indent", and so they'll be removed and re-added.

@@ -1,6 +1,6 @@
 [
-    // {
-    //     "caption": "TextFormatting",
-    //     "command": "text_formatting"
-    // }
+    {
+        "caption": "TextFormatting",
+        "command": "text_formatting_maxlength"
+    }
 ]
