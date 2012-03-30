@@ -1,0 +1,7 @@
+{
+  "repo": "SublimeTextFormatting",
+  "name": "TextFormatting",
+  "description": "Adds text-formatting tricks to Sublime Text.  Mostly for PEP8 formatting.",
+  "author": "Colin Thomas-Arnold (colinta)",
+  "homepage": "https://github.com/colinta/SublimeTextFormatting"
+}

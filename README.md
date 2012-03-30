@@ -1,7 +1,7 @@
  Text Formatting for Sublime Text 2
 ====================================
 
-A plugin that adds text-formatting tricks to Sublime Text.
+Adds text-formatting tricks to Sublime Text.  Mostly for PEP8 formatting.
 
  Installation
 --------------
