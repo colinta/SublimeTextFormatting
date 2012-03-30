@@ -32,7 +32,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         indent_regex = '^\s*(#|//)? *'
         selection = self.view.substr(region)
         lines = selection.splitlines()
-        print len(lines)
         if selection[-1] == "\n":
             lines.append('')
 
