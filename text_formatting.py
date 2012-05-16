@@ -25,8 +25,19 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         if region.empty():
             region = self.view.line(region)
 
-        indent_regex = '^\s*(#|//)? *'
+        is_php = self.view.score_selector(region.a, 'source.php')
+        is_haskell = self.view.score_selector(region.a, 'source.haskell')
+        is_python = self.view.score_selector(region.a, 'source.python')
+        if is_php:
+            indent_regex = re.compile(r'^\s*(#|//| \* )?\s*')
+        elif is_python:
+            indent_regex = re.compile(r'^\s*(#)?\s*')
+        elif is_haskell:
+            indent_regex = re.compile(r'^\s*(--)?\s*')
+        else:
+            indent_regex = re.compile(r'^\s*(#|//)?\s*')
         selection = self.view.substr(region)
+
         lines = selection.splitlines()
         if selection[-1] == "\n":
             lines.append('')
@@ -52,7 +63,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         combined = []
         current = u''
         for line in lines:
-            if re.match('^\s*$', line):
+            if re.match(r'^\s*$', line):
                 if current:
                     combined.append(current)
                 combined.append('')
@@ -79,7 +90,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
                     current += ' '
                     too_much = too_much[1:]
 
-                indent = re.match(indent_regex, current).group(0)
+                indent = indent_regex.match(current).group(0)
                 if ' ' in current:
                     space = current.rindex(' ')
                 else:
@@ -98,14 +109,14 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
                     # remove the trailing space and continue working on current
                     current = indent + current[space + 1:] + too_much
 
-            if not line or re.match('^\s*$', line):
+            if not line or re.match(r'^\s*$', line):
                 if current:
                     ret.append(current)
                     current = None
                 if line is not None:
                     ret.append('')
             else:
-                indent = re.match(indent_regex, line).group(0)
+                indent = indent_regex.match(line).group(0)
                 line = line[len(indent):].strip()
                 if current:
                     current += u' '
