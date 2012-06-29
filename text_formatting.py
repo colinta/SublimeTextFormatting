@@ -4,6 +4,11 @@ import sublime
 import sublime_plugin
 
 
+class NonBreakingBreak:
+    pass
+NonBreakingBreak = NonBreakingBreak()
+
+
 class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         e = self.view.begin_edit('text_formatting')
@@ -36,7 +41,11 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             indent_regex = re.compile(r'^\s*(--)?\s*')
         else:
             indent_regex = re.compile(r'^\s*(#|//)?\s*')
+        markdown_indent_regex = re.compile(r'^\s*([-*+]|[0-9]\.)\s*')
         selection = self.view.substr(region)
+        # parsed = self.parse(selection)
+        # print parsed
+        # return
 
         lines = selection.splitlines()
         if selection[-1] == "\n":
@@ -47,9 +56,18 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         for line in lines:
             if not line:
                 continue
-            indent = re.match(indent_regex, line).group(0)
-            if initial_indent is None or len(indent) < len(initial_indent):
+            # markdown correction - if the first line is [-*+0-9]\.? *,
+            # and every subsequent line has whitespace in the place of those
+            # characters,
+            if initial_indent is None and markdown_indent_regex.match(line):
+                pass
+            indent = indent_regex.match(line).group(0)
+            # if the line is matching a line that is only a blank comment,
+            # we should disregard it.
+            if initial_indent is None or \
+                    (len(indent) < len(initial_indent) and line != indent):
                 initial_indent = indent
+            # don't bother contuing if we've eaten up the entire indentation
             if len(initial_indent) == 0:
                 break
 
@@ -128,3 +146,9 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             ret = map(lambda line: line and initial_indent + line or line, ret)
 
         self.view.replace(edit, region, "\n".join(ret))
+
+    def parse(self, selection):
+        # - blocks of whitespace, separated by two newlines
+        # - blocks of comments, separated by two newlines
+        # - blocks of markdown-style lists
+        return [selection]
