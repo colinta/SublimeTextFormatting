@@ -43,9 +43,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             indent_regex = re.compile(r'^\s*(#|//)?\s*')
         markdown_indent_regex = re.compile(r'^\s*([-*+]|[0-9]\.)\s*')
         selection = self.view.substr(region)
-        # parsed = self.parse(selection)
-        # print parsed
-        # return
 
         lines = selection.splitlines()
         if selection[-1] == "\n":
