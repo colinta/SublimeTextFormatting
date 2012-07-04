@@ -1,3 +1,5 @@
 [
-    { "keys": ["super+shift+space"], "command": "text_formatting_maxlength" }
+    { "keys": ["super+shift+space"], "command": "text_formatting_maxlength" },
+    { "keys": ["ctrl+p", "ctrl+p"], "command": "text_formatting_debug_python" },
+    { "keys": ["ctrl+p", "p"], "command": "text_formatting_debug_python" }
 ]

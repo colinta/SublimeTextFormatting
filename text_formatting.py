@@ -149,3 +149,42 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         # - blocks of comments, separated by two newlines
         # - blocks of markdown-style lists
         return [selection]
+
+
+class TextFormattingDebugPython(sublime_plugin.TextCommand):
+    def run(self, edit, **kwargs):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        regions.sort(compare)
+
+        error = None
+        empty_regions = []
+        debug = ''
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                if debug:
+                    debug += "\n"
+                debug += "{s}: {{{s}!r}}".format(s=s)
+                self.view.sel().subtract(region)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                p = 'print("""'
+                p += "=============== at line {line} ===============\n".format(line=self.view.rowcol(empty.a)[0] + 1)
+                p += debug
+                p += '""".format(**locals()))'
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+        self.view.end_edit(e)
