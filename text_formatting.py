@@ -179,10 +179,10 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
-                p = 'print("""'
-                p += "=============== at line {line} ===============\n".format(line=self.view.rowcol(empty.a)[0] + 1)
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                p = 'print("""=============== at line {line_no} ===============\n'.format(line_no=line_no)
                 p += debug
-                p += '""".format(**locals()))'
+                p += '\n""".format(**locals()))'
                 self.view.insert(edit, empty.a, p)
 
         if error:
