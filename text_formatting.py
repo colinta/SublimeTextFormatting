@@ -34,11 +34,11 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         is_haskell = self.view.score_selector(region.a, 'source.haskell')
         is_python = self.view.score_selector(region.a, 'source.python')
         if is_php:
-            indent_regex = re.compile(r'^\s*(#|//| \* )?\s*')
+            indent_regex = re.compile(r'^\s*?(#|//| \* )?\s*')
         elif is_python:
-            indent_regex = re.compile(r'^\s*(#)?\s*')
+            indent_regex = re.compile(r'^\s*?(#)?\s*')
         elif is_haskell:
-            indent_regex = re.compile(r'^\s*(--)?\s*')
+            indent_regex = re.compile(r'^\s*?(--)?\s*')
         else:
             indent_regex = re.compile(r'^\s*(#|//)?\s*')
         markdown_indent_regex = re.compile(r'^\s*([-*+]|[0-9]\.)\s*')
