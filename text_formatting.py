@@ -156,12 +156,6 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
-        # any edits that are performed will happen in reverse; this makes it
-        # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        regions.sort(compare)
-
         error = None
         empty_regions = []
         debug = ''
@@ -183,6 +177,39 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
                 p = 'print("""=============== at line {line_no} ===============\n'.format(line_no=line_no)
                 p += debug
                 p += '\n""".format(**locals()))'
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+        self.view.end_edit(e)
+
+
+class TextFormattingDebugRuby(sublime_plugin.TextCommand):
+    def run(self, edit, puts="puts"):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        error = None
+        empty_regions = []
+        debug = ''
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                if debug:
+                    debug += "\n"
+                debug += "{s}: #{{{s}.inspect}}".format(s=s)
+                self.view.sel().subtract(region)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                p = puts + '(<<debug)\n=============== at line {line_no} ===============\n'.format(line_no=line_no)
+                p += debug
+                p += '\ndebug'
                 self.view.insert(edit, empty.a, p)
 
         if error:

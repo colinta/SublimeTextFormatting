@@ -29,3 +29,33 @@ and reformat when you're done.
 
 Also works with comments.  Lines that have `#` or `//` are considered part of the
 "indent", and so they'll be removed and re-added.
+
+`text_formatting_debug_python`: Select multiple variables, then put an empty
+cursor somewhere and run this command (default: `ctrl+p` twice or `ctrl+p,p`).  You'll get
+some good debug output that looks like this:
+
+```python
+print("""=============== at line 38 ===============
+looks: {looks!r}
+like: {like!r}
+this: {this!r}
+""".format(**locals()))
+```
+
+`text_formatting_debug_ruby`: Similar to `text_formatting_debug_python`
+(default: `ctrl+p, ctrl+r` or `ctrl+p,r`).  Output looks like this:
+
+```ruby
+puts(<<debug)
+=============== at line 49 ===============
+looks: #{looks.inspect}
+like: #{like.inspect}
+this: #{this.inspect}
+debug
+```
+
+For [rubymotion][] development, you can use `NSLog` instead of `puts`:
+
+    { "keys": ["ctrl+p", "ctrl+p"], "command": "text_formatting_debug_python", "args": { "puts": "NSLog" } },
+
+[rubymotion]: http://rubymotion.com/
