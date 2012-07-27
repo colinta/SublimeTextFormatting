@@ -207,9 +207,9 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
         else:
             for empty in empty_regions:
                 line_no = self.view.rowcol(empty.a)[0] + 1
-                p = puts + '(<<debug)\n=============== at line {line_no} ===============\n'.format(line_no=line_no)
+                p = puts + '("=============== at line {line_no} ===============\n'.format(line_no=line_no)
                 p += debug
-                p += '\ndebug'
+                p += '")'
                 self.view.insert(edit, empty.a, p)
 
         if error:
