@@ -166,7 +166,7 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
                 s = self.view.substr(region)
                 if debug:
                     debug += "\n"
-                debug += "{s}: {{{s}!r}}".format(s=s)
+                debug += "{s}: {{{s}!r}}".format(s=s.replace('"', '').replace("'", ''))
                 self.view.sel().subtract(region)
 
         if not empty_regions:
