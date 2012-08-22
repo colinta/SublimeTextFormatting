@@ -1,7 +1,4 @@
 [
     { "keys": ["super+shift+space"], "command": "text_formatting_maxlength" },
-    { "keys": ["ctrl+p", "ctrl+p"], "command": "text_formatting_debug_python" },
-    { "keys": ["ctrl+p", "p"], "command": "text_formatting_debug_python" },
-    { "keys": ["ctrl+p", "ctrl+r"], "command": "text_formatting_debug_ruby" },
-    { "keys": ["ctrl+p", "r"], "command": "text_formatting_debug_ruby" }
+    { "keys": ["ctrl+p", "ctrl+p"], "command": "text_formatting_debug" }
 ]

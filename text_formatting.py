@@ -1,3 +1,4 @@
+import os.path
 import re
 
 import sublime
@@ -156,14 +157,32 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         return [selection]
 
 
-class TextFormattingDebugPython(sublime_plugin.TextCommand):
+class TextFormattingDebug(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
+        if not len(self.view.sel()):
+            return
+
+        if self.view.score_selector(0, 'source.python'):
+            self.view.run_command('text_formatting_debug_python', kwargs)
+        elif self.view.score_selector(0, 'source.ruby'):
+            self.view.run_command('text_formatting_debug_ruby', kwargs)
+        elif self.view.score_selector(0, 'source.objc'):
+            self.view.run_command('text_formatting_debug_objc', kwargs)
+        elif self.view.score_selector(0, 'source.js'):
+            self.view.run_command('text_formatting_debug_js', kwargs)
+        else:
+            sublime.status_message('No support for the current language grammar.')
+
+
+class TextFormattingDebugPython(sublime_plugin.TextCommand):
+    def run(self, edit, puts="print"):
         e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
         empty_regions = []
         debug = ''
+        debug_vars = []
         for region in regions:
             if not region:
                 empty_regions.append(region)
@@ -171,18 +190,39 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
                 s = self.view.substr(region)
                 if debug:
                     debug += "\n"
-                debug += "{s}: {{{s}!r}}".format(s=s.replace('"', '').replace("'", ''))
+                debug += "{s}: {{{count}!r}}".format(s=s, count=len(debug_vars))
+                debug_vars.append(s)
                 self.view.sel().subtract(region)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
+            return
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        empty_regions.sort(compare)
+
+        if self.view.file_name():
+            name = os.path.basename(self.view.file_name())
+        elif self.view.name():
+            name = self.view.name()
         else:
-            for empty in empty_regions:
-                line_no = self.view.rowcol(empty.a)[0] + 1
-                p = 'print("""=============== at line {line_no} ===============\n'.format(line_no=line_no)
-                p += debug
-                p += '\n""".format(**locals()))'
-                self.view.insert(edit, empty.a, p)
+            name = 'Untitled'
+
+        for empty in empty_regions:
+            line_no = self.view.rowcol(empty.a)[0] + 1
+            if debug:
+                p = puts + '("""=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                p += "\n" + debug + "\n"
+                p += '""".format('
+                for var in debug_vars:
+                    p += var.strip() + ', '
+                p += '))'
+            else:
+                p = puts + '("=============== {name} at line {line_no} ===============")'.format(name=name, line_no=line_no)
+            self.view.insert(edit, empty.a, p)
 
         if error:
             sublime.status_message(error)
@@ -207,14 +247,120 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                 debug += "{s}: #{{{s}.inspect}}".format(s=s)
                 self.view.sel().subtract(region)
 
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        empty_regions.sort(compare)
+
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
                 line_no = self.view.rowcol(empty.a)[0] + 1
-                p = puts + '("=============== at line {line_no} ===============\n'.format(line_no=line_no)
-                p += debug
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                p = puts + '("=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                if debug:
+                    p += "\n"
+                    p += debug
                 p += '")'
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+        self.view.end_edit(e)
+
+
+class TextFormattingDebugObjc(sublime_plugin.TextCommand):
+    def run(self, edit, puts="NSLog"):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        error = None
+        empty_regions = []
+        debug = ''
+        debug_vars = ''
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                debug += "\\n\\\n"
+                debug_vars += ", "
+                debug += "{s}: %@".format(s=s)
+                debug_vars += s
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        empty_regions.sort(compare)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                p = puts + '(@"=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                p += debug
+                p += '"'
+                p += debug_vars
+                p += ");"
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+        self.view.end_edit(e)
+
+
+class TextFormattingDebugJs(sublime_plugin.TextCommand):
+    def run(self, edit, puts="console.log"):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        error = None
+        empty_regions = []
+        debugs = []
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                debugs += ["'{s}:', {s}".format(s=s)]
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        empty_regions.sort(compare)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                p = puts + '("=============== {name} at line {line_no} ===============");\n'.format(name=name, line_no=line_no)
+                for debug in debugs:
+                    p += puts + "({debug});\n".format(debug=debug)
                 self.view.insert(edit, empty.a, p)
 
         if error:
