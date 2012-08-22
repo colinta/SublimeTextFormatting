@@ -21,7 +21,12 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         regions.sort(compare)
 
         for region in regions:
-            error = self.run_each(edit, region, **kwargs)
+            try:
+                error = self.run_each(edit, region, **kwargs)
+            except Exception as exception:
+                print repr(exception)
+                error = exception.message
+
             if error:
                 sublime.status_message(error)
         self.view.end_edit(e)
