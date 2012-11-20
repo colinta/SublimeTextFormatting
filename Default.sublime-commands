@@ -4,6 +4,10 @@
         "command": "text_formatting_maxlength"
     },
     {
+        "caption": "TextFormatting - Prettify JSON",
+        "command": "text_formatting_prettify_json"
+    },
+    {
         "caption": "TextFormatting - Debug Python",
         "command": "text_formatting_debug_python"
     },

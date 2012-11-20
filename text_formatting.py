@@ -1,5 +1,7 @@
 import os.path
 import re
+import pprint
+import json
 
 import sublime
 import sublime_plugin
@@ -8,6 +10,36 @@ import sublime_plugin
 class NonBreakingBreak:
     pass
 NonBreakingBreak = NonBreakingBreak()
+
+
+class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
+    def run(self, edit, **kwargs):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        regions.sort(compare)
+
+        for region in regions:
+            try:
+                error = self.run_each(edit, region, **kwargs)
+            except Exception as exception:
+                print repr(exception)
+                error = exception.message
+
+            if error:
+                sublime.status_message(error)
+        self.view.end_edit(e)
+
+    def run_each(self, edit, region, maxlength=80):
+        if region.empty():
+            return
+
+        replace_str = json.dumps(json.loads(self.view.substr(region)), sort_keys=True, indent=4)
+        self.view.replace(edit, region, replace_str)
 
 
 class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
