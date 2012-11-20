@@ -1,6 +1,5 @@
 import os.path
 import re
-import pprint
 import json
 
 import sublime
