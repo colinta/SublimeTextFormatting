@@ -196,6 +196,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
 
         if self.view.score_selector(0, 'source.python'):
             self.view.run_command('text_formatting_debug_python', kwargs)
+        elif self.view.score_selector(0, 'source.ruby.mac'):
+            self.view.run_command('text_formatting_debug_ruby_motion', kwargs)
         elif self.view.score_selector(0, 'source.ruby'):
             self.view.run_command('text_formatting_debug_ruby', kwargs)
         elif self.view.score_selector(0, 'source.objc'):
@@ -276,7 +278,11 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                 s = self.view.substr(region)
                 if debug:
                     debug += "\n"
-                debug += "{s}: #{{{s}.inspect}}".format(s=s)
+                if ' ' in s:
+                    var = "({0})".format(s)
+                else:
+                    var = s
+                debug += "{s}: #{{{var}.inspect}}".format(s=s, var=var)
                 self.view.sel().subtract(region)
 
         # any edits that are performed will happen in reverse; this makes it
@@ -296,7 +302,7 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '("=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                p = puts + '("=============== {name} at line #{{__LINE__}}, self = #{{self.inspect}} ==============='.format(name=name, line_no=line_no)
                 if debug:
                     p += "\n"
                     p += debug
@@ -324,7 +330,7 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
                 s = self.view.substr(region)
                 debug += "\\n\\\n"
                 debug_vars += ", "
-                debug += "{s}: %@".format(s=s)
+                debug += "{s}: %@".format(s=s.replace("\"", r'\"'))
                 debug_vars += s
                 self.view.sel().subtract(region)
 
@@ -398,3 +404,8 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
         if error:
             sublime.status_message(error)
         self.view.end_edit(e)
+
+
+class TextFormattingDebugRubyMotion(TextFormattingDebugRuby):
+    def run(self, edit, puts="NSLog"):
+        return super(TextFormattingDebugRubyMotion, self).run(edit, puts)
