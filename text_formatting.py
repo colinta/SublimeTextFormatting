@@ -203,6 +203,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
             self.view.run_command('text_formatting_debug_objc', kwargs)
         elif self.view.score_selector(0, 'source.js'):
             self.view.run_command('text_formatting_debug_js', kwargs)
+        elif self.view.score_selector(0, 'source.php'):
+            self.view.run_command('text_formatting_debug_php', kwargs)
         else:
             sublime.status_message('No support for the current language grammar.')
 
@@ -398,6 +400,61 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
                 p = puts + '("=============== {name} at line {line_no} ===============");\n'.format(name=name, line_no=line_no)
                 for debug in debugs:
                     p += puts + "({debug});\n".format(debug=debug)
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+        self.view.end_edit(e)
+
+
+class TextFormattingDebugPhp(sublime_plugin.TextCommand):
+    def run(self, edit):
+        e = self.view.begin_edit('text_formatting')
+        regions = [region for region in self.view.sel()]
+
+        error = None
+        empty_regions = []
+        debugs = ''
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                if debugs:
+                    debugs += ", "
+                debugs += "'{0}' => {1}".format(s.replace('\'', '\\\''), s)
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def compare(region_a, region_b):
+            return cmp(region_b.end(), region_a.end())
+        empty_regions.sort(compare)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                line_start = self.view.line(empty).begin()
+                line_indent = self.view.rowcol(empty.a)[1]
+                indent = self.view.substr(sublime.Region(line_start, line_start + line_indent))
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                p = "error_log('=============== {name} at line {line_no} ===============');\n".format(name=name, line_no=line_no)
+
+                p += '''{indent}$__debug = array({debugs});
+{indent}ob_start();
+{indent}var_dump($__debug);
+{indent}$__debug = explode("\\n", ob_get_clean());
+{indent}foreach($__debug as $__line)
+{indent}{{
+{indent}    error_log($__line);
+{indent}}}'''.format(indent=indent, debugs=debugs)
                 self.view.insert(edit, empty.a, p)
 
         if error:
