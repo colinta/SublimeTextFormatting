@@ -445,16 +445,15 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = "error_log('=============== {name} at line {line_no} ===============');\n".format(name=name, line_no=line_no)
 
-                p += '''{indent}$__debug = array({debugs});
+                p = '''$__LINE__ = __LINE__;error_log("=============== {name} at line $__LINE__ ===============");'''.format(name=name, line_no=line_no)
+                if debugs:
+                    p += '''
 {indent}ob_start();
-{indent}var_dump($__debug);
-{indent}$__debug = explode("\\n", ob_get_clean());
-{indent}foreach($__debug as $__line)
-{indent}{{
-{indent}    error_log($__line);
-{indent}}}'''.format(indent=indent, debugs=debugs)
+{indent}var_dump(array({debugs}));
+{indent}array_map('error_log', explode("\\n", ob_get_clean()));
+'''[:-1].format(indent=indent, debugs=debugs)
+
                 self.view.insert(edit, empty.a, p)
 
         if error:
