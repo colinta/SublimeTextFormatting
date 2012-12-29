@@ -225,7 +225,7 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
                 s = self.view.substr(region)
                 if debug:
                     debug += "\n"
-                debug += "{s}: {{{count}!r}}".format(s=s, count=len(debug_vars))
+                debug += "{s}: {{{count}!r}}".format(s=s, count=1 + len(debug_vars))
                 debug_vars.append(s)
                 self.view.sel().subtract(region)
 
@@ -249,14 +249,14 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         for empty in empty_regions:
             line_no = self.view.rowcol(empty.a)[0] + 1
             if debug:
-                p = puts + '("""=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                p = puts + '("""=============== {name} at line {{0}} ==============='.format(name=name, line_no=line_no)
                 p += "\n" + debug + "\n"
-                p += '""".format('
+                p += '""".format(__import__(\'sys\')._getframe().f_lineno - {lines}, '.format(lines=1 + len(debug_vars))
                 for var in debug_vars:
                     p += var.strip() + ', '
                 p += '))'
             else:
-                p = puts + '("=============== {name} at line {line_no} ===============")'.format(name=name, line_no=line_no)
+                p = puts + '("=============== {name} at line {{0}} ===============".format(sys._getframe().f_lineno))'.format(name=name, line_no=line_no)
             self.view.insert(edit, empty.a, p)
 
         if error:
