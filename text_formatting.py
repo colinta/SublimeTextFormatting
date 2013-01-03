@@ -296,16 +296,16 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
-                line_no = self.view.rowcol(empty.a)[0] + 1
+                # line_no = self.view.rowcol(empty.a)[0] + 1
                 if self.view.file_name():
                     name = os.path.basename(self.view.file_name())
                 elif self.view.name():
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '("=============== {name} at line #{{__LINE__}}, self = #{{self.inspect}} ==============='.format(name=name, line_no=line_no)
+                p = puts + '("=============== {name} line #{{__LINE__}}, self = #{{self.inspect}} ==============='.format(name=name)
                 if debug:
-                    p += "\n"
+                    p += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
                     p += debug
                 p += '")'
                 self.view.insert(edit, empty.a, p)
@@ -328,12 +328,16 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
             if not region:
                 empty_regions.append(region)
             else:
+                if not debug_vars:
+                    debug_vars = ', __PRETTY_FUNCTION__, __LINE__+1'
                 s = self.view.substr(region)
                 debug += "\\n\\\n"
                 debug_vars += ", "
                 debug += "{s}: %@".format(s=s.replace("\"", r'\"'))
                 debug_vars += s
                 self.view.sel().subtract(region)
+        if not debug_vars:
+            debug_vars = ', __PRETTY_FUNCTION__, __LINE__'
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
@@ -345,14 +349,14 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
-                line_no = self.view.rowcol(empty.a)[0] + 1
+                # line_no = self.view.rowcol(empty.a)[0] + 1
                 if self.view.file_name():
                     name = os.path.basename(self.view.file_name())
                 elif self.view.name():
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '(@"=============== {name} at line {line_no} ==============='.format(name=name, line_no=line_no)
+                p = puts + '(@"=============== {name}:%s at line %i ==============='.format(name=name)
                 p += debug
                 p += '"'
                 p += debug_vars
