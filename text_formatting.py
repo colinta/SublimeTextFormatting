@@ -256,7 +256,7 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
                     p += var.strip() + ', '
                 p += '))'
             else:
-                p = puts + '("=============== {name} at line {{0}} ===============".format(sys._getframe().f_lineno))'.format(name=name, line_no=line_no)
+                p = puts + '("=============== {name} at line {{0}} ===============".format(__import__(\'sys\')._getframe().f_lineno))'.format(name=name, line_no=line_no)
             self.view.insert(edit, empty.a, p)
 
         if error:
