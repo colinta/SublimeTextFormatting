@@ -195,7 +195,7 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
 
         if self.view.score_selector(0, 'source.python'):
             self.view.run_command('text_formatting_debug_python', kwargs)
-        elif self.view.score_selector(0, 'source.ruby.mac'):
+        elif self.view.score_selector(0, 'source.ruby.mac') or self.view.score_selector(0, 'source.rubymotion'):
             self.view.run_command('text_formatting_debug_ruby_motion', kwargs)
         elif self.view.score_selector(0, 'source.ruby'):
             self.view.run_command('text_formatting_debug_ruby', kwargs)
@@ -303,7 +303,7 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '("=============== {name} line #{{__LINE__}}, self = #{{self.inspect}} ==============='.format(name=name)
+                p = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
                 if debug:
                     p += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
                     p += debug
