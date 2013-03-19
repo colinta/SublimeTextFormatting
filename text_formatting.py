@@ -19,8 +19,8 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        regions.sort(key=get_end)
+            return region.end()
+        regions.sort(key=get_end, reverse=True)
 
         for region in regions:
             try:
@@ -49,8 +49,8 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        regions.sort(key=get_end)
+            return region.end()
+        regions.sort(key=get_end, reverse=True)
 
         for region in regions:
             try:
@@ -236,8 +236,8 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        empty_regions.sort(key=get_end)
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
 
         if self.view.file_name():
             name = os.path.basename(self.view.file_name())
@@ -289,8 +289,8 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        empty_regions.sort(key=get_end)
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -342,8 +342,8 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        empty_regions.sort(key=get_end)
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -387,8 +387,8 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        empty_regions.sort(key=get_end)
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -432,8 +432,8 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
-            return region.end
-        empty_regions.sort(key=get_end)
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
