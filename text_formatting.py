@@ -18,9 +18,9 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        regions.sort(compare)
+        def get_end(region):
+            return region.end
+        regions.sort(key=get_end)
 
         for region in regions:
             try:
@@ -48,9 +48,9 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        regions.sort(compare)
+        def get_end(region):
+            return region.end
+        regions.sort(key=get_end)
 
         for region in regions:
             try:
@@ -235,9 +235,9 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        empty_regions.sort(compare)
+        def get_end(region):
+            return region.end
+        empty_regions.sort(key=get_end)
 
         if self.view.file_name():
             name = os.path.basename(self.view.file_name())
@@ -288,9 +288,9 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        empty_regions.sort(compare)
+        def get_end(region):
+            return region.end
+        empty_regions.sort(key=get_end)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -341,9 +341,9 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        empty_regions.sort(compare)
+        def get_end(region):
+            return region.end
+        empty_regions.sort(key=get_end)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -386,9 +386,9 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        empty_regions.sort(compare)
+        def get_end(region):
+            return region.end
+        empty_regions.sort(key=get_end)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
@@ -431,9 +431,9 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
 
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
-        def compare(region_a, region_b):
-            return cmp(region_b.end(), region_a.end())
-        empty_regions.sort(compare)
+        def get_end(region):
+            return region.end
+        empty_regions.sort(key=get_end)
 
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
