@@ -382,7 +382,7 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
                 empty_regions.append(region)
             else:
                 s = self.view.substr(region)
-                debugs += ["'{s}:', {s}".format(s=s)]
+                debugs += ["'{s_escaped}:', {s}".format(s=s, s_escaped=s.replace("'", "\\'"))]
                 self.view.sel().subtract(region)
 
         # any edits that are performed will happen in reverse; this makes it
