@@ -1,6 +1,7 @@
 import os.path
 import re
 import json
+from functools import cmp_to_key
 
 import sublime
 import sublime_plugin
@@ -13,7 +14,6 @@ NonBreakingBreak = NonBreakingBreak()
 
 class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         # any edits that are performed will happen in reverse; this makes it
@@ -26,12 +26,10 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
             try:
                 error = self.run_each(edit, region, **kwargs)
             except Exception as exception:
-                print repr(exception)
                 error = exception.message
 
             if error:
                 sublime.status_message(error)
-        self.view.end_edit(e)
 
     def run_each(self, edit, region, maxlength=80):
         if region.empty():
@@ -43,7 +41,6 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
 
 class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         # any edits that are performed will happen in reverse; this makes it
@@ -56,12 +53,10 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             try:
                 error = self.run_each(edit, region, **kwargs)
             except Exception as exception:
-                print repr(exception)
                 error = exception.message
 
             if error:
                 sublime.status_message(error)
-        self.view.end_edit(e)
 
     def run_each(self, edit, region, maxlength=80):
         if region.empty():
@@ -212,7 +207,6 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
 
 class TextFormattingDebugPython(sublime_plugin.TextCommand):
     def run(self, edit, puts="print"):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
@@ -262,12 +256,10 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
 
         if error:
             sublime.status_message(error)
-        self.view.end_edit(e)
 
 
 class TextFormattingDebugRuby(sublime_plugin.TextCommand):
     def run(self, edit, puts="puts"):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
@@ -313,12 +305,10 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
 
         if error:
             sublime.status_message(error)
-        self.view.end_edit(e)
 
 
 class TextFormattingDebugObjc(sublime_plugin.TextCommand):
     def run(self, edit, puts="NSLog"):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
@@ -366,12 +356,10 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
 
         if error:
             sublime.status_message(error)
-        self.view.end_edit(e)
 
 
 class TextFormattingDebugJs(sublime_plugin.TextCommand):
     def run(self, edit, puts="console.log"):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
@@ -413,12 +401,10 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
 
         if error:
             sublime.status_message(error)
-        self.view.end_edit(e)
 
 
 class TextFormattingDebugPhp(sublime_plugin.TextCommand):
     def run(self, edit):
-        e = self.view.begin_edit('text_formatting')
         regions = [region for region in self.view.sel()]
 
         error = None
@@ -467,7 +453,6 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
 
         if error:
             sublime.status_message(error)
-        self.view.end_edit(e)
 
 
 class TextFormattingDebugRubyMotion(TextFormattingDebugRuby):
