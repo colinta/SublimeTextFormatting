@@ -167,6 +167,13 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         return [selection]
 
 
+class TextFormattingLineNumbers(sublime_plugin.TextCommand):
+    def run(self, edit):
+        for region in self.view.sel():
+            line_no = self.view.rowcol(region.a)[0] + 1
+            self.view.replace(edit, region, str(line_no))
+
+
 class TextFormattingDebug(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         if not len(self.view.sel()):
