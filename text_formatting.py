@@ -197,9 +197,6 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         debug_vars = []
         regions = list(self.view.sel())
         for region in regions:
-            print(repr(region))
-            print(repr(self.view.substr(region)))
-
             if not region:
                 empty_regions.append(region)
             else:
