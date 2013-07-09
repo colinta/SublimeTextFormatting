@@ -1,10 +1,12 @@
- Text Formatting for Sublime Text 2
-====================================
+Text Formatting for Sublime Text 2
+==================================
 
 Adds text-formatting tricks to Sublime Text.  Mostly for PEP8 formatting.
 
- Installation
---------------
+Installation
+------------
+
+### Sublime Text 2
 
 1. Using Package Control, install "Text Formatting"
 
@@ -19,8 +21,15 @@ Or:
 2. clone this repo
 3. Install keymaps for the commands (see Example.sublime-keymap for my preferred keys)
 
- Commands
-----------
+### Sublime Text 3
+
+1. Open the Sublime Text 2 Packages folder
+2. clone this repo, but use the `st3` branch
+
+       git clone -b st3 git@github.com:colinta/SublimeTextFormatting
+
+Commands
+--------
 
 `text_formatting_maxlength`: Wraps text to `maxlength` (default: 80) characters.
 Select a bunch of docstrings or README content and it will not just *warp* lines,
