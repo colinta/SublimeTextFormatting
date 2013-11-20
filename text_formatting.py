@@ -7,11 +7,6 @@ import sublime
 import sublime_plugin
 
 
-class NonBreakingBreak:
-    pass
-NonBreakingBreak = NonBreakingBreak()
-
-
 class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         for region in self.view.sel():
