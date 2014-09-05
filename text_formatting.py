@@ -187,6 +187,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
             self.view.run_command('text_formatting_debug_js', kwargs)
         elif self.view.score_selector(location, 'source.php'):
             self.view.run_command('text_formatting_debug_php', kwargs)
+        elif self.view.score_selector(location, 'source.java'):
+            self.view.run_command('text_formatting_debug_java', kwargs)
         else:
             sublime.status_message('No support for the current language grammar.')
 
@@ -439,3 +441,49 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
 class TextFormattingDebugRubyMotion(TextFormattingDebugRuby):
     def run(self, edit, puts="NSLog"):
         return super(TextFormattingDebugRubyMotion, self).run(edit, puts)
+
+
+class TextFormattingDebugJava(sublime_plugin.TextCommand):
+    def run(self, edit, puts="System.out.println"):
+        error = None
+        empty_regions = []
+        debugs = []
+        regions = list(self.view.sel())
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                debugs += ['"{s_escaped}:", {s}'.format(s=s, s_escaped=s.replace('"', '\\"'))]
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def get_end(region):
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                line_start = self.view.line(empty).begin()
+                line_indent = self.view.rowcol(empty.a)[1]
+                indent = self.view.substr(sublime.Region(line_start, line_start + line_indent))
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                output = puts + '("=============== {name} at line {line_no} ===============");\n'.format(name=name, line_no=line_no)
+                for debug in debugs:
+                    output += indent + puts + "({debug});\n".format(debug=debug)
+                output = output[:-1]
+                self.view.insert(edit, empty.a, output)
+
+        if error:
+            sublime.status_message(error)
+
+
