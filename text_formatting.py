@@ -300,12 +300,17 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
         debug = ''
         debug_vars = ''
         regions = list(self.view.sel())
+        not_empty_regions = 0
+        for region in regions:
+            if region:
+                not_empty_regions += 1
+
         for region in regions:
             if not region:
                 empty_regions.append(region)
             else:
                 if not debug_vars:
-                    debug_vars = ', __PRETTY_FUNCTION__, __LINE__+1'
+                    debug_vars = ', __PRETTY_FUNCTION__, __LINE__ - {0}'.format(not_empty_regions)
                 s = self.view.substr(region)
                 debug += "\\n\\\n"
                 debug_vars += ", "
