@@ -183,6 +183,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
             self.view.run_command('text_formatting_debug_ruby', kwargs)
         elif self.view.score_selector(location, 'source.objc'):
             self.view.run_command('text_formatting_debug_objc', kwargs)
+        elif self.view.score_selector(location, 'source.swift'):
+            self.view.run_command('text_formatting_debug_swift', kwargs)
         elif self.view.score_selector(location, 'source.js'):
             self.view.run_command('text_formatting_debug_js', kwargs)
         elif self.view.score_selector(location, 'source.php'):
@@ -275,7 +277,6 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
-                # line_no = self.view.rowcol(empty.a)[0] + 1
                 if self.view.file_name():
                     name = os.path.basename(self.view.file_name())
                 elif self.view.name():
@@ -285,6 +286,71 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                 p = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
                 if debug:
                     p += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
+                    p += debug
+                p += '")'
+                self.view.insert(edit, empty.a, p)
+
+        if error:
+            sublime.status_message(error)
+
+
+class TextFormattingDebugSwift(sublime_plugin.TextCommand):
+    def run(self, edit, puts="println"):
+        error = None
+        empty_regions = []
+        debug = ''
+        debug_vars = []
+        regions = list(self.view.sel())
+        whitespace = None
+
+        if self.view.settings().get('translate_tabs_to_spaces'):
+            tab = ' ' * self.view.settings().get('tab_size')
+        else:
+            tab = "\t"
+
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+                if whitespace is None:
+                    line = self.view.line(region.begin())
+                    whitespace = self.view.substr(sublime.Region(line.begin(), region.begin()))
+            else:
+                s = self.view.substr(region)
+                if ' ' in s:
+                    var = "({0})".format(s)
+                else:
+                    var = s
+                debug_vars.append((s, var))
+                self.view.sel().subtract(region)
+
+        if whitespace:
+            whitespace += ' ' * (len(puts) + 1)
+
+        for (s, var) in debug_vars:
+            if debug:
+                debug += "\\n\" + \n" + whitespace + "\""
+
+            debug += "{s}: \({var})".format(s=s.replace("\"", r'\"'), var=var)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def get_end(region):
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for empty in empty_regions:
+                if self.view.file_name():
+                    name = os.path.basename(self.view.file_name())
+                elif self.view.name():
+                    name = self.view.name()
+                else:
+                    name = 'Untitled'
+                p = puts + '("=============== \(__FILE__.lastPathComponent) line \(__LINE__) ==============='.format(name=name)
+                if debug:
+                    p += '\\n" +\n' + whitespace + '"'
                     p += debug
                 p += '")'
                 self.view.insert(edit, empty.a, p)
@@ -330,7 +396,6 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
             sublime.status_message('You must place an empty cursor somewhere')
         else:
             for empty in empty_regions:
-                # line_no = self.view.rowcol(empty.a)[0] + 1
                 if self.view.file_name():
                     name = os.path.basename(self.view.file_name())
                 elif self.view.name():
