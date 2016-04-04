@@ -295,7 +295,7 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
 
 
 class TextFormattingDebugSwift(sublime_plugin.TextCommand):
-    def run(self, edit, puts="println"):
+    def run(self, edit, puts="print"):
         error = None
         empty_regions = []
         debug = ''
@@ -348,7 +348,7 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '("=============== \(__FILE__.lastPathComponent) line \(__LINE__) ==============='.format(name=name)
+                p = puts + '("=============== \(#file) line \(#line) ==============='.format(name=name)
                 if debug:
                     p += '\\n" +\n' + whitespace + '"'
                     p += debug
@@ -447,7 +447,7 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                output = puts + '("=============== {name} at line {line_no} ===============");\n'.format(name=name, line_no=line_no)
+                output = puts + '(\'=============== {name} at line {line_no} ===============\');\n'.format(name=name, line_no=line_no)
                 for debug in debugs:
                     output += indent + puts + "({debug});\n".format(debug=debug)
                 output = output[:-1]
