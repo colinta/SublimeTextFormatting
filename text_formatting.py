@@ -233,15 +233,15 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         for empty in empty_regions:
             line_no = self.view.rowcol(empty.a)[0] + 1
             if debug:
-                p = puts + '("""=============== {name} at line {{0}} ==============='.format(name=name, line_no=line_no)
-                p += "\n" + debug + "\n"
-                p += '""".format(__import__(\'sys\')._getframe().f_lineno - {lines}, '.format(lines=1 + len(debug_vars))
+                output = puts + '("""=============== {name} at line {{0}} ==============='.format(name=name, line_no=line_no)
+                output += "\n" + debug + "\n"
+                output += '""".format(__import__(\'sys\')._getframe().f_lineno - {lines}, '.format(lines=1 + len(debug_vars))
                 for var in debug_vars:
-                    p += var.strip() + ', '
-                p += '))'
+                    output += var.strip() + ', '
+                output += '))'
             else:
-                p = puts + '("=============== {name} at line {{0}} ===============".format(__import__(\'sys\')._getframe().f_lineno))'.format(name=name, line_no=line_no)
-            self.view.insert(edit, empty.a, p)
+                output = puts + '("=============== {name} at line {{0}} ===============".format(__import__(\'sys\')._getframe().f_lineno))'.format(name=name, line_no=line_no)
+            self.view.insert(edit, empty.a, output)
 
         if error:
             sublime.status_message(error)
@@ -283,12 +283,12 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
+                output = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
                 if debug:
-                    p += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
-                    p += debug
-                p += '")'
-                self.view.insert(edit, empty.a, p)
+                    output += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
+                    output += debug
+                output += '")'
+                self.view.insert(edit, empty.a, output)
 
         if error:
             sublime.status_message(error)
@@ -323,15 +323,6 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
                 debug_vars.append((s, var))
                 self.view.sel().subtract(region)
 
-        if whitespace:
-            whitespace += ' ' * (len(puts) + 1)
-
-        for (s, var) in debug_vars:
-            if debug:
-                debug += "\\n\" + \n" + whitespace + "\""
-
-            debug += "{s}: \({var})".format(s=s.replace("\"", r'\"'), var=var)
-
         # any edits that are performed will happen in reverse; this makes it
         # easy to keep region.a and region.b pointing to the correct locations
         def get_end(region):
@@ -341,19 +332,16 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
-            for empty in empty_regions:
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-                p = puts + '("=============== \(#file) line \(#line) ==============='.format(name=name)
+            for (s, var) in debug_vars:
                 if debug:
-                    p += '\\n" +\n' + whitespace + '"'
-                    p += debug
-                p += '")'
-                self.view.insert(edit, empty.a, p)
+                    debug += "\n"
+                debug += whitespace + puts + "(\"{s}: \({var})\")".format(s=s.replace("\"", r'\"'), var=var)
+
+            for empty in empty_regions:
+                output = puts + '("=============== \(#file) line \(#line) ===============")'
+                if debug:
+                    output += "\n" + debug
+                self.view.insert(edit, empty.a, output)
 
         if error:
             sublime.status_message(error)
@@ -402,12 +390,12 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
                     name = self.view.name()
                 else:
                     name = 'Untitled'
-                p = puts + '(@"=============== {name}:%s at line %i ==============='.format(name=name)
-                p += debug
-                p += '"'
-                p += debug_vars
-                p += ");"
-                self.view.insert(edit, empty.a, p)
+                output = puts + '(@"=============== {name}:%s at line %i ==============='.format(name=name)
+                output += debug
+                output += '"'
+                output += debug_vars
+                output += ");"
+                self.view.insert(edit, empty.a, output)
 
         if error:
             sublime.status_message(error)
@@ -494,15 +482,15 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
                 else:
                     name = 'Untitled'
 
-                p = '''$__LINE__ = __LINE__;error_log("=============== {name} at line $__LINE__ ===============");'''.format(name=name, line_no=line_no)
+                output = '''$__LINE__ = __LINE__;error_log("=============== {name} at line $__LINE__ ===============");'''.format(name=name, line_no=line_no)
                 if debugs:
-                    p += '''
+                    output += '''
 {indent}ob_start();
 {indent}var_dump(array({debugs}));
 {indent}array_map('error_log', explode("\\n", ob_get_clean()));
 '''[:-1].format(indent=indent, debugs=debugs)
 
-                self.view.insert(edit, empty.a, p)
+                self.view.insert(edit, empty.a, output)
 
         if error:
             sublime.status_message(error)
