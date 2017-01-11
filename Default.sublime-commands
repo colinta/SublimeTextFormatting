@@ -12,11 +12,7 @@
         "command": "text_formatting_line_numbers"
     },
     {
-        "caption": "TextFormatting - Debug Python",
-        "command": "text_formatting_debug_python"
-    },
-    {
-        "caption": "TextFormatting - Debug Ruby",
-        "command": "text_formatting_debug_ruby"
+        "caption": "TextFormatting - printf(selection)",
+        "command": "text_formatting_debug"
     }
 ]
