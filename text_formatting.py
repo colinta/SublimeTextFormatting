@@ -197,6 +197,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
             self.view.run_command('text_formatting_debug_php', kwargs)
         elif self.view.score_selector(location, 'source.java'):
             self.view.run_command('text_formatting_debug_java', kwargs)
+        elif self.view.score_selector(location, 'source.elixir'):
+            self.view.run_command('text_formatting_debug_elixir', kwargs)
         else:
             sublime.status_message('No support for the current language grammar.')
 
@@ -342,6 +344,59 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
                 debug += puts + "(\"{s}: \({var})\")".format(s=s.replace("\"", r'\"'), var=var)
 
             output = puts + '("=============== \(#file) line \(#line) ===============")'
+            if debug:
+                output += "\n" + debug
+
+            for empty in empty_regions:
+                indent = indent_at(self.view, empty)
+                line_output = output.replace("\n", "\n{0}".format(indent))
+                self.view.insert(edit, empty.a, line_output)
+
+        if error:
+            sublime.status_message(error)
+
+
+
+class TextFormattingDebugElixir(sublime_plugin.TextCommand):
+    def run(self, edit, puts="IO.puts"):
+        error = None
+        empty_regions = []
+        debug = ''
+        debug_vars = []
+        regions = list(self.view.sel())
+
+        if self.view.settings().get('translate_tabs_to_spaces'):
+            tab = ' ' * self.view.settings().get('tab_size')
+        else:
+            tab = "\t"
+
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                if ' ' in s:
+                    var = "({0})".format(s)
+                else:
+                    var = s
+                debug_vars.append((s, var))
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def get_end(region):
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            for (s, var) in debug_vars:
+                if debug:
+                    debug += "\n"
+                debug += puts + "(\"{s}: #{{inspect({var})}}\")".format(s=s.replace("\"", r'\"'), var=var)
+
+            output = puts + '("=============== #{__ENV__.file} line #{__ENV__.line} ===============")'
             if debug:
                 output += "\n" + debug
 
