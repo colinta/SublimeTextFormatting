@@ -7,6 +7,12 @@ import sublime
 import sublime_plugin
 
 
+def indent_at(view, region):
+    line_start = view.line(region).begin()
+    line_indent = view.rowcol(region.a)[1]
+    return view.substr(sublime.Region(line_start, line_start + line_indent))
+
+
 class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         for region in self.view.sel():
@@ -230,17 +236,17 @@ class TextFormattingDebugPython(sublime_plugin.TextCommand):
         else:
             name = 'Untitled'
 
+        if debug:
+            output = puts + '("""=============== {name} at line {{0}} ==============='.format(name=name)
+            output += "\n" + debug + "\n"
+            output += '""".format(__import__(\'sys\')._getframe().f_lineno - {lines}, '.format(lines=1 + len(debug_vars))
+            for var in debug_vars:
+                output += var.strip() + ', '
+            output += '))'
+        else:
+            output = puts + '("=============== {name} at line {{0}} ===============".format(__import__(\'sys\')._getframe().f_lineno))'.format(name=name)
+
         for empty in empty_regions:
-            line_no = self.view.rowcol(empty.a)[0] + 1
-            if debug:
-                output = puts + '("""=============== {name} at line {{0}} ==============='.format(name=name, line_no=line_no)
-                output += "\n" + debug + "\n"
-                output += '""".format(__import__(\'sys\')._getframe().f_lineno - {lines}, '.format(lines=1 + len(debug_vars))
-                for var in debug_vars:
-                    output += var.strip() + ', '
-                output += '))'
-            else:
-                output = puts + '("=============== {name} at line {{0}} ===============".format(__import__(\'sys\')._getframe().f_lineno))'.format(name=name, line_no=line_no)
             self.view.insert(edit, empty.a, output)
 
         if error:
@@ -276,18 +282,20 @@ class TextFormattingDebugRuby(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
+            if debug:
+                output += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
+                output += debug
+            output += '")'
+
             for empty in empty_regions:
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-                output = puts + '("=============== {name} line #{{__LINE__}} ==============='.format(name=name)
-                if debug:
-                    output += '\n=============== #{self.class == Class ? self.name + \'##\' : self.class.name + \'#\'}#{__method__} ===============\n'
-                    output += debug
-                output += '")'
                 self.view.insert(edit, empty.a, output)
 
         if error:
@@ -301,7 +309,6 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
         debug = ''
         debug_vars = []
         regions = list(self.view.sel())
-        whitespace = None
 
         if self.view.settings().get('translate_tabs_to_spaces'):
             tab = ' ' * self.view.settings().get('tab_size')
@@ -311,9 +318,6 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
         for region in regions:
             if not region:
                 empty_regions.append(region)
-                if whitespace is None:
-                    line = self.view.line(region.begin())
-                    whitespace = self.view.substr(sublime.Region(line.begin(), region.begin()))
             else:
                 s = self.view.substr(region)
                 if ' ' in s:
@@ -335,13 +339,16 @@ class TextFormattingDebugSwift(sublime_plugin.TextCommand):
             for (s, var) in debug_vars:
                 if debug:
                     debug += "\n"
-                debug += whitespace + puts + "(\"{s}: \({var})\")".format(s=s.replace("\"", r'\"'), var=var)
+                debug += puts + "(\"{s}: \({var})\")".format(s=s.replace("\"", r'\"'), var=var)
+
+            output = puts + '("=============== \(#file) line \(#line) ===============")'
+            if debug:
+                output += "\n" + debug
 
             for empty in empty_regions:
-                output = puts + '("=============== \(#file) line \(#line) ===============")'
-                if debug:
-                    output += "\n" + debug
-                self.view.insert(edit, empty.a, output)
+                indent = indent_at(self.view, empty)
+                line_output = output.replace("\n", "\n{0}".format(indent))
+                self.view.insert(edit, empty.a, line_output)
 
         if error:
             sublime.status_message(error)
@@ -383,18 +390,20 @@ class TextFormattingDebugObjc(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = puts + '(@"=============== {name}:%s at line %i ==============='.format(name=name)
+            output += debug
+            output += '"'
+            output += debug_vars
+            output += ");"
+
             for empty in empty_regions:
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-                output = puts + '(@"=============== {name}:%s at line %i ==============='.format(name=name)
-                output += debug
-                output += '"'
-                output += debug_vars
-                output += ");"
                 self.view.insert(edit, empty.a, output)
 
         if error:
@@ -424,22 +433,23 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = puts + '(\'=============== {name} at line line_no ===============\');\n'.format(name=name)
+            for debug in debugs:
+                output += puts + "({debug});\n".format(debug=debug)
+            output = output[:-1]
+
             for empty in empty_regions:
-                line_start = self.view.line(empty).begin()
-                line_indent = self.view.rowcol(empty.a)[1]
-                indent = self.view.substr(sublime.Region(line_start, line_start + line_indent))
+                indent = indent_at(self.view, empty)
                 line_no = self.view.rowcol(empty.a)[0] + 1
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-                output = puts + '(\'=============== {name} at line {line_no} ===============\');\n'.format(name=name, line_no=line_no)
-                for debug in debugs:
-                    output += indent + puts + "({debug});\n".format(debug=debug)
-                output = output[:-1]
-                self.view.insert(edit, empty.a, output)
+                line_output = output.replace("\n", "\n{0}".format(indent)).replace("line_no", str(line_no))
+                self.view.insert(edit, empty.a, line_output)
 
         if error:
             sublime.status_message(error)
@@ -470,27 +480,25 @@ class TextFormattingDebugPhp(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = '''$__LINE__ = __LINE__;error_log("=============== {name} at line $__LINE__ ===============");'''.format(name=name)
+            if debugs:
+                output += '''
+ob_start();
+var_dump(array({debugs}));
+array_map('error_log', explode("\\n", ob_get_clean()));
+'''[:-1].format(debugs=debugs)
+
             for empty in empty_regions:
-                line_start = self.view.line(empty).begin()
-                line_indent = self.view.rowcol(empty.a)[1]
-                indent = self.view.substr(sublime.Region(line_start, line_start + line_indent))
-                line_no = self.view.rowcol(empty.a)[0] + 1
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-
-                output = '''$__LINE__ = __LINE__;error_log("=============== {name} at line $__LINE__ ===============");'''.format(name=name, line_no=line_no)
-                if debugs:
-                    output += '''
-{indent}ob_start();
-{indent}var_dump(array({debugs}));
-{indent}array_map('error_log', explode("\\n", ob_get_clean()));
-'''[:-1].format(indent=indent, debugs=debugs)
-
-                self.view.insert(edit, empty.a, output)
+                indent = indent_at(self.view, empty)
+                line_output = output.replace("\n", "\n{0}".format(indent))
+                self.view.insert(edit, empty.a, line_output)
 
         if error:
             sublime.status_message(error)
@@ -524,22 +532,23 @@ class TextFormattingDebugJava(sublime_plugin.TextCommand):
         if not empty_regions:
             sublime.status_message('You must place an empty cursor somewhere')
         else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = puts + '("=============== {name} at line line_no ===============");\n'.format(name=name)
+            for debug in debugs:
+                output += puts + "({debug});\n".format(debug=debug)
+            output = output[:-1]
+
             for empty in empty_regions:
-                line_start = self.view.line(empty).begin()
-                line_indent = self.view.rowcol(empty.a)[1]
-                indent = self.view.substr(sublime.Region(line_start, line_start + line_indent))
+                indent = indent_at(self.view, empty)
                 line_no = self.view.rowcol(empty.a)[0] + 1
-                if self.view.file_name():
-                    name = os.path.basename(self.view.file_name())
-                elif self.view.name():
-                    name = self.view.name()
-                else:
-                    name = 'Untitled'
-                output = puts + '("=============== {name} at line {line_no} ===============");\n'.format(name=name, line_no=line_no)
-                for debug in debugs:
-                    output += indent + puts + "({debug});\n".format(debug=debug)
-                output = output[:-1]
-                self.view.insert(edit, empty.a, output)
+                line_output = output.replace("\n", "\n{0}".format(indent)).replace("line_no", str(line_no))
+                self.view.insert(edit, empty.a, line_output)
 
         if error:
             sublime.status_message(error)
