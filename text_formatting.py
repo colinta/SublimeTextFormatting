@@ -476,7 +476,10 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
                 empty_regions.append(region)
             else:
                 s = self.view.substr(region)
-                debugs += ["'{s_escaped}:', {s}".format(s=s, s_escaped=s.replace("'", "\\'"))]
+                if re.match(r'^\w+$', s):
+                    debugs.append(s)
+                else:
+                    debugs.append("'{s_escaped}': {s}".format(s=s, s_escaped=s.replace("'", "\\'")))
                 self.view.sel().subtract(region)
 
         # any edits that are performed will happen in reverse; this makes it
@@ -496,8 +499,15 @@ class TextFormattingDebugJs(sublime_plugin.TextCommand):
                 name = 'Untitled'
 
             output = puts + '(\'=============== {name} at line line_no ===============\');\n'.format(name=name)
-            for debug in debugs:
-                output += puts + "({debug});\n".format(debug=debug)
+            if debugs:
+                output += puts + "({ "
+                first = True
+                for debug in debugs:
+                    if not first:
+                        output += ', '
+                    first = False
+                    output += debug
+                output += " })\n"
             output = output[:-1]
 
             for empty in empty_regions:
