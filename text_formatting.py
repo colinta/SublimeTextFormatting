@@ -197,6 +197,8 @@ class TextFormattingDebug(sublime_plugin.TextCommand):
             self.view.run_command('text_formatting_debug_php', kwargs)
         elif self.view.score_selector(location, 'source.java'):
             self.view.run_command('text_formatting_debug_java', kwargs)
+        elif self.view.score_selector(location, 'source.Kotlin'):
+            self.view.run_command('text_formatting_debug_kotlin', kwargs)
         elif self.view.score_selector(location, 'source.elixir'):
             self.view.run_command('text_formatting_debug_elixir', kwargs)
         else:
@@ -618,4 +620,50 @@ class TextFormattingDebugJava(sublime_plugin.TextCommand):
         if error:
             sublime.status_message(error)
 
+
+
+
+class TextFormattingDebugKotlin(sublime_plugin.TextCommand):
+    def run(self, edit, puts="println"):
+        error = None
+        empty_regions = []
+        debugs = []
+        regions = list(self.view.sel())
+        for region in regions:
+            if not region:
+                empty_regions.append(region)
+            else:
+                s = self.view.substr(region)
+                debugs += ['"{s_escaped}: ${{{s}}}"'.format(s=s, s_escaped=s.replace('"', '\\"'))]
+                self.view.sel().subtract(region)
+
+        # any edits that are performed will happen in reverse; this makes it
+        # easy to keep region.a and region.b pointing to the correct locations
+        def get_end(region):
+            return region.end()
+        empty_regions.sort(key=get_end, reverse=True)
+
+        if not empty_regions:
+            sublime.status_message('You must place an empty cursor somewhere')
+        else:
+            if self.view.file_name():
+                name = os.path.basename(self.view.file_name())
+            elif self.view.name():
+                name = self.view.name()
+            else:
+                name = 'Untitled'
+
+            output = puts + '("=============== {name} at line line_no ===============")\n'.format(name=name)
+            for debug in debugs:
+                output += puts + "({debug})\n".format(debug=debug)
+            output = output[:-1]
+
+            for empty in empty_regions:
+                indent = indent_at(self.view, empty)
+                line_no = self.view.rowcol(empty.a)[0] + 1
+                line_output = output.replace("\n", "\n{0}".format(indent)).replace("line_no", str(line_no))
+                self.view.insert(edit, empty.a, line_output)
+
+        if error:
+            sublime.status_message(error)
 
