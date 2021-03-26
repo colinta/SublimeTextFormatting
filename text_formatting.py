@@ -13,7 +13,7 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
             try:
                 error = self.run_each(edit, region, **kwargs)
             except Exception as exception:
-                error = exception.message
+                error = str(exception)
 
             if error:
                 sublime.status_message(error)
@@ -32,7 +32,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             try:
                 error = self.run_each(edit, region, **kwargs)
             except Exception as exception:
-                error = exception.message
+                error = str(exception)
 
             if error:
                 sublime.status_message(error)
@@ -44,10 +44,13 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         is_php = self.view.score_selector(region.a, 'source.php')
         is_haskell = self.view.score_selector(region.a, 'source.haskell')
         is_python = self.view.score_selector(region.a, 'source.python')
+        is_java = self.view.score_selector(region.a, 'source.python') or self.view.score_selector(region.a, 'source.Kotlin')
         if is_php:
             indent_regex = re.compile(r'^\s*?(#|//| \* )?\s*')
         elif is_python:
             indent_regex = re.compile(r'^\s*?(#)?\s*')
+        elif is_java:
+            indent_regex = re.compile(r'^\s*?([*])?\s*')
         elif is_haskell:
             indent_regex = re.compile(r'^\s*?(--)?\s*')
         else:
@@ -80,9 +83,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
                 break
 
         if initial_indent:
-            maxlength -= len(initial_indent)
-            if maxlength <= 0:
-                return
             lines = map(lambda line: line[len(initial_indent):], lines)
 
         # combine sequential lines
