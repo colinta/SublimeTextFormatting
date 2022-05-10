@@ -37,25 +37,35 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             if error:
                 sublime.status_message(error)
 
+    def is_lang(self, region, *langs):
+        for lang in langs:
+            if bool(self.view.score_selector(region.a, lang)):
+                return True
+        return False
+
     def run_each(self, edit, region, maxlength=80):
         if region.empty():
             region = self.view.line(region)
 
-        is_php = self.view.score_selector(region.a, 'source.php')
-        is_haskell = self.view.score_selector(region.a, 'source.haskell')
-        is_python = self.view.score_selector(region.a, 'source.python')
-        is_java = self.view.score_selector(region.a, 'source.python') or self.view.score_selector(region.a, 'source.Kotlin')
+        is_php = self.is_lang(region, 'source.php')
+        is_haskell = self.is_lang(region, 'source.haskell')
+        is_python = self.is_lang(region, 'source.python')
+        is_java = self.is_lang(region, 'source.python', 'source.Kotlin')
+        is_javascript = self.is_lang(region, 'source.ts', 'source.tsx', 'source.js')
+
         if is_php:
-            indent_regex = re.compile(r'^\s*?(#|//| \* )?\s*')
+            indent_regex = re.compile(r'^\s*(#|//| \* )?\s*')
         elif is_python:
-            indent_regex = re.compile(r'^\s*?(#)?\s*')
+            indent_regex = re.compile(r'^\s*(#)?\s*')
         elif is_java:
-            indent_regex = re.compile(r'^\s*?([*])?\s*')
+            indent_regex = re.compile(r'^\s*([*])?\s*')
+        elif is_javascript:
+            indent_regex = re.compile(r'^\s*([*])?\s*')
         elif is_haskell:
-            indent_regex = re.compile(r'^\s*?(--)?\s*')
+            indent_regex = re.compile(r'^\s*(--)?\s*')
         else:
             indent_regex = re.compile(r'^\s*(#|//)?\s*')
-        markdown_indent_regex = re.compile(r'^\s*([-*+]|[0-9]\.)\s*')
+        markdown_indent_regex = re.compile(r'^\s*([-*+]|[0-9]+\.)[ ]*')
         selection = self.view.substr(region)
 
         lines = selection.splitlines()
@@ -67,9 +77,9 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         for line in lines:
             if not line:
                 continue
-            # markdown correction - if the first line is [-*+0-9]\.? *,
+            # markdown correction - if the first line is [-*+]|[0-9]\.?[ ]*,
             # and every subsequent line has whitespace in the place of those
-            # characters,
+            # characters, skip that line
             if initial_indent is None and markdown_indent_regex.match(line):
                 pass
             indent = indent_regex.match(line).group(0)
@@ -78,7 +88,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             if initial_indent is None or \
                     (len(indent) < len(initial_indent) and line != indent):
                 initial_indent = indent
-            # don't bother contuing if we've eaten up the entire indentation
+            # don't bother continuing if we've eaten up the entire indentation
             if len(initial_indent) == 0:
                 break
 
