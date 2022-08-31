@@ -58,9 +58,9 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
         elif is_python:
             indent_regex = re.compile(r'^\s*(#)?\s*')
         elif is_java:
-            indent_regex = re.compile(r'^\s*([*])?\s*')
+            indent_regex = re.compile(r'^\s*(\*)?\s*')
         elif is_javascript:
-            indent_regex = re.compile(r'^\s*([*])?\s*')
+            indent_regex = re.compile(r'^\s*(\*)?\s*')
         elif is_haskell:
             indent_regex = re.compile(r'^\s*(--)?\s*')
         else:
