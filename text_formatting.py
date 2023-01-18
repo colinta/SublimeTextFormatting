@@ -165,12 +165,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
 
         self.view.replace(edit, region, "\n".join(ret))
 
-    def parse(self, selection):
-        # - blocks of whitespace, separated by two newlines
-        # - blocks of comments, separated by two newlines
-        # - blocks of markdown-style lists
-        return [selection]
-
 
 class TextFormattingLineNumbers(sublime_plugin.TextCommand):
     def run(self, edit):
