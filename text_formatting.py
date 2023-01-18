@@ -171,3 +171,35 @@ class TextFormattingLineNumbers(sublime_plugin.TextCommand):
         for region in self.view.sel():
             line_no = self.view.rowcol(region.a)[0] + 1
             self.view.replace(edit, region, str(line_no))
+
+
+class TextFormattingSort(sublime_plugin.TextCommand):
+    def run(self, edit, case_sensitive=False):
+        if len(self.view.sel()) == 1:
+            lines = self.view.lines(self.view.sel()[0])
+            self.view.sel().clear()
+            for sel in lines:
+                self.view.sel().add(sel)
+            self.sort(edit, lines, case_sensitive)
+
+        elif self.view.sel():
+            self.sort(edit, [sel for sel in self.view.sel()], case_sensitive)
+
+    def sort(self, edit, selections, case_sensitive):
+        def to_trim(sel):
+            text = self.view.substr(sel)
+            sort_text = text.strip()
+            if not case_sensitive:
+                sort_text = sort_text.lower()
+            return {
+                'sel': sel,
+                'text': text,
+                'sort_text': sort_text,
+            }
+        trim_list = [to_trim(sel) for sel in selections]
+
+        sorted_list = sorted(trim_list, key=lambda trim: trim['sort_text'])
+        sel_list = sorted([trim['sel'] for trim in trim_list], key=lambda sel: sel.begin())
+
+        for sel, trim in list(zip(sel_list, sorted_list))[::-1]:
+            self.view.replace(edit, sel, trim['text'])
