@@ -1,16 +1,21 @@
 [
-    { "keys": ["super+shift+space"], "command": "text_formatting_maxlength" },
-    { "keys": ["ctrl+l"], "command": "text_formatting_line_numbers" },
+  { "keys": ["super+shift+space"], "command": "text_formatting_maxlength" },
+  { "keys": ["ctrl+l"], "command": "text_formatting_line_numbers" },
+  { "keys": ["f5"], "command": "text_formatting_sort" },
+  { "keys": ["ctrl+f5"], "command": "text_formatting_sort", "args": {"case_sensitive": true} },
 
-    // not pertinant to this plugin, but useful for anyone who writes JSDoc/JavaDocs
-    { "keys": ["/"], "command": "chain", "args": {
+  // not pertinant to this plugin, but useful for anyone who writes JSDoc/JavaDocs
+  { "keys": ["/"], "command": "chain",
+    "args": {
       "commands": [
         ["left_delete"],
         ["insert_snippet", {"contents": "/"}]
-      ]},
+      ]
+    },
     "context": [
       { "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
-      { "key": "preceding_text", "operator": "regex_match", "operand": "^ +\\* ", "match_all": true },
-    ] },
+      { "key": "preceding_text", "operator": "regex_match", "operand": "^ +\\* ", "match_all": true }
+    ]
+  }
 
 ]
