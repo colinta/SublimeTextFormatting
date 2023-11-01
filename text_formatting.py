@@ -16,7 +16,7 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
                 error = str(exception)
 
             if error:
-                sublime.status_message(error)
+                self.view.show_popup(error)
 
     def run_each(self, edit, region, maxlength=80):
         if region.empty():
@@ -35,7 +35,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
                 error = str(exception)
 
             if error:
-                sublime.status_message(error)
+                self.view.show_popup(error)
 
     def is_lang(self, region, *langs):
         for lang in langs:
