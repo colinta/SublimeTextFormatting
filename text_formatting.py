@@ -173,24 +173,51 @@ class TextFormattingLineNumbers(sublime_plugin.TextCommand):
             self.view.replace(edit, region, str(line_no))
 
 
+
+def preceding_digits(line):
+    numeric_regex = re.compile(r'\A(\s*)(\d+)(.*)\Z', re.DOTALL)
+    match = numeric_regex.match(line)
+    if not match:
+        return
+    return (match.group(1), match.group(2), match.group(3))
+
 class TextFormattingSort(sublime_plugin.TextCommand):
-    def run(self, edit, case_sensitive=False):
+    def run(self, edit, case_sensitive=False, numeric=False):
         if len(self.view.sel()) == 1:
             lines = self.view.lines(self.view.sel()[0])
             self.view.sel().clear()
             for sel in lines:
                 self.view.sel().add(sel)
-            self.sort(edit, lines, case_sensitive)
+            self.sort(edit, lines, case_sensitive=case_sensitive, numeric=numeric)
 
         elif self.view.sel():
-            self.sort(edit, [sel for sel in self.view.sel()], case_sensitive)
+            self.sort(edit, [sel for sel in self.view.sel()], case_sensitive, numeric=numeric)
 
-    def sort(self, edit, selections, case_sensitive):
+    def sort(self, edit, selections, case_sensitive, numeric):
+        max_digits = 0
+        if numeric:
+            filtered_selections = []
+            for sel in selections:
+                line = self.view.substr(sel)
+                digits = preceding_digits(line)
+                if digits is None:
+                    continue
+                _, digits, _ = digits
+
+                filtered_selections.append(sel)
+                max_digits = max(max_digits, len(digits))
+            selections = filtered_selections
+
         def to_trim(sel):
             text = self.view.substr(sel)
             sort_text = text.strip()
             if not case_sensitive:
                 sort_text = sort_text.lower()
+            if numeric:
+                # 'selections' has been filtered already by 'if numeric' above
+                whitespace, digits, remainder = preceding_digits(text)
+                if len(digits) < max_digits:
+                    sort_text = whitespace + '0' * (max_digits - len(digits)) + digits + remainder
             return {
                 'sel': sel,
                 'text': text,
