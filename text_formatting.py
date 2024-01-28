@@ -174,12 +174,12 @@ class TextFormattingLineNumbers(sublime_plugin.TextCommand):
 
 
 
-def preceding_digits(line):
-    numeric_regex = re.compile(r'\A(\s*)(\d+)(.*)\Z', re.DOTALL)
+def first_digits(line):
+    numeric_regex = re.compile(r'\A([^\d]*)(\d+)([^\d]*)\Z', re.DOTALL)
     match = numeric_regex.match(line)
     if not match:
-        return
-    return (match.group(1), match.group(2), match.group(3))
+        return '0'
+    return match.group(2)
 
 class TextFormattingSort(sublime_plugin.TextCommand):
     def run(self, edit, case_sensitive=False, numeric=False):
@@ -188,45 +188,39 @@ class TextFormattingSort(sublime_plugin.TextCommand):
             self.view.sel().clear()
             for sel in lines:
                 self.view.sel().add(sel)
-            self.sort(edit, lines, case_sensitive=case_sensitive, numeric=numeric)
+            self.sort(edit, lines, case_sensitive=case_sensitive, numeric=numeric, did_select=True)
 
         elif self.view.sel():
-            self.sort(edit, [sel for sel in self.view.sel()], case_sensitive, numeric=numeric)
+            self.sort(edit, [sel for sel in self.view.sel()], case_sensitive, numeric=numeric, did_select=False)
 
-    def sort(self, edit, selections, case_sensitive, numeric):
+    def sort(self, edit, selections, case_sensitive, numeric, did_select):
         max_digits = 0
         if numeric:
-            filtered_selections = []
             for sel in selections:
                 line = self.view.substr(sel)
-                digits = preceding_digits(line)
-                if digits is None:
-                    continue
-                _, digits, _ = digits
-
-                filtered_selections.append(sel)
+                digits = first_digits(line)
                 max_digits = max(max_digits, len(digits))
-            selections = filtered_selections
 
-        def to_trim(sel):
-            text = self.view.substr(sel)
-            sort_text = text.strip()
+        def transform(region):
+            line = self.view.substr(region)
+            sort_text = line.strip()
             if not case_sensitive:
                 sort_text = sort_text.lower()
             if numeric:
-                # 'selections' has been filtered already by 'if numeric' above
-                whitespace, digits, remainder = preceding_digits(text)
-                if len(digits) < max_digits:
-                    sort_text = whitespace + '0' * (max_digits - len(digits)) + digits + remainder
+                digits = first_digits(line)
+                sort_text = '0' * (max_digits - len(digits)) + digits
             return {
-                'sel': sel,
-                'text': text,
+                'region': region,
+                'line': line,
                 'sort_text': sort_text,
             }
-        trim_list = [to_trim(sel) for sel in selections]
+        sort_model = [transform(region) for region in selections]
 
-        sorted_list = sorted(trim_list, key=lambda trim: trim['sort_text'])
-        sel_list = sorted([trim['sel'] for trim in trim_list], key=lambda sel: sel.begin())
+        sorted_list = sorted(sort_model, key=lambda trim: trim['sort_text'])
 
-        for sel, trim in list(zip(sel_list, sorted_list))[::-1]:
-            self.view.replace(edit, sel, trim['text'])
+        if not did_select and sorted_list == sort_model:
+            sorted_list = sorted(sort_model, key=lambda trim: trim['sort_text'], reverse=True)
+        region_list = sorted([trim['region'] for trim in sort_model], key=lambda region: region.begin())
+
+        for region, trim in list(zip(region_list, sorted_list))[::-1]:
+            self.view.replace(edit, region, trim['line'])
