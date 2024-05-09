@@ -7,11 +7,107 @@ import sublime
 import sublime_plugin
 
 
+class TextFormattingTree(sublime_plugin.TextCommand):
+    def run(self, edit, **kwargs):
+        error = None
+        for region in self.view.sel():
+            try:
+                self.run_each(edit, region, **kwargs)
+            except Exception as exception:
+                self.view.show_popup(str(exception))
+                raise exception
+
+    def run_each(self, edit, region):
+        def create_node(name):
+            return {"name": name, "children": []}
+
+        def custom_trim(line):
+            trimmed = ''
+            for c in line.strip():
+                if trimmed == '' and c in [' ', '\t' , '*', '-']:
+                    continue
+                trimmed += c
+            return trimmed
+
+        def render_tree(node, front=''):
+            if not node['children']:
+                return node['name']
+
+            if node['name']:
+                lines = [node['name']]
+            else:
+                lines = ['.']
+
+            # lines = [node['name'] or '']
+            for (index, child) in enumerate(node['children']):
+                if index == len(node['children']) - 1:
+                    first = '└─╴'
+                    next_front = front + '   '
+                else:
+                    first = '├─╴'
+                    next_front = front + '│  '
+
+                lines.append(front + first + render_tree(child, next_front))
+            return '\n'.join(lines) + ('\n' if front == '' else '')
+
+        # convert bulleted list into an tree
+        # using ├ └ ─ ╼ characters
+        lines = self.view.substr(region).splitlines()
+        stack = []
+        current_node = create_node(None)
+        current_indent = None
+        prev_node = None
+        required_indent = None
+
+        def flush(current_node, current_indent, indent, stack):
+            last_indent = current_indent
+            while indent < last_indent:
+                if not stack:
+                    break
+                [last_node, last_indent] = stack.pop()
+                # last_node['children'].append(current_node)
+                if not last_node:
+                    break
+                current_node = last_node
+                current_indent = last_indent
+            return (current_node, current_indent)
+
+        for line in lines:
+            if not line.strip():
+                continue
+
+            node = create_node(custom_trim(line))
+            indent = len(line) - len(line.lstrip())
+            if current_indent is None:
+                current_indent = indent
+                required_indent = line[:indent]
+
+            if prev_node is None:
+                min_indent = indent
+            elif indent < min_indent or line[:min_indent] != required_indent:
+                raise Exception('Indentation level is not consistent for item "' + line.strip() + '" (expected indentation ' + repr(required_indent) + ')')
+
+            line = line.strip()[min_indent:]
+
+            if indent > current_indent:
+                stack.append([current_node, current_indent])
+                current_node = prev_node
+                current_indent = indent
+            elif indent < current_indent:
+                current_node, current_indent = flush(current_node, current_indent, indent, stack)
+
+            current_node['children'].append(node)
+            prev_node = node
+
+        current_node, current_indent = flush(current_node, current_indent, 0, stack)
+        self.view.replace(edit, region, render_tree(current_node))
+
+
 class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         for region in self.view.sel():
             try:
-                error = self.run_each(edit, region, **kwargs)
+                self.run_each(edit, region, **kwargs)
             except Exception as exception:
                 error = str(exception)
 
@@ -30,7 +126,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
         for region in self.view.sel():
             try:
-                error = self.run_each(edit, region, **kwargs)
+                self.run_each(edit, region, **kwargs)
             except Exception as exception:
                 error = str(exception)
 
