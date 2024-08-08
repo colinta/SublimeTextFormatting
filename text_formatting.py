@@ -8,6 +8,8 @@ import sublime_plugin
 
 
 class TextFormattingTree(sublime_plugin.TextCommand):
+    TREE = [' ', '├', '└', '─', '╴', '│', '\t', '*', '-']
+
     def run(self, edit, **kwargs):
         error = None
         for region in self.view.sel():
@@ -24,7 +26,7 @@ class TextFormattingTree(sublime_plugin.TextCommand):
         def custom_trim(line):
             trimmed = ''
             for c in line.strip():
-                if trimmed == '' and c in [' ', '\t' , '*', '-']:
+                if trimmed == '' and c in self.TREE:
                     continue
                 trimmed += c
             return trimmed
@@ -53,6 +55,9 @@ class TextFormattingTree(sublime_plugin.TextCommand):
         # convert bulleted list into an tree
         # using ├ └ ─ ╼ characters
         lines = self.view.substr(region).splitlines()
+        if lines[0] == '.':
+            lines = lines[1:]
+
         stack = []
         current_node = create_node(None)
         current_indent = None
@@ -77,14 +82,14 @@ class TextFormattingTree(sublime_plugin.TextCommand):
                 continue
 
             node = create_node(custom_trim(line))
-            indent = len(line) - len(line.lstrip())
+            indent = len(line) - len(custom_trim(line))
             if current_indent is None:
                 current_indent = indent
-                required_indent = line[:indent]
+                required_indent = indent
 
             if prev_node is None:
                 min_indent = indent
-            elif indent < min_indent or line[:min_indent] != required_indent:
+            elif indent < min_indent or min_indent != required_indent:
                 raise Exception('Indentation level is not consistent for item "' + line.strip() + '" (expected indentation ' + repr(required_indent) + ')')
 
             line = line.strip()[min_indent:]
@@ -129,8 +134,6 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
                 self.run_each(edit, region, **kwargs)
             except Exception as exception:
                 error = str(exception)
-
-            if error:
                 self.view.show_popup(error)
 
     def is_lang(self, region, *langs):

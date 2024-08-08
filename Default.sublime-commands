@@ -10,8 +10,11 @@
   {
     "caption": "TextFormatting - Output line numbers",
     "command": "text_formatting_line_numbers"
-  }
-  ,
+  },
+  {
+    "caption": "TextFormatting - Format as Tree",
+    "command": "text_formatting_tree"
+  },
   {
     "caption": "TextFormatting - Sort lines or selections",
     "command": "text_formatting_sort"
