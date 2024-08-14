@@ -8,7 +8,7 @@ import sublime_plugin
 
 
 class TextFormattingTree(sublime_plugin.TextCommand):
-    TREE = [' ', '├', '└', '─', '╴', '│', '\t', '*', '-']
+    TREE = [' ', '├', '└', '─', '│', '\t', '*', '-']
 
     def run(self, edit, **kwargs):
         error = None
@@ -43,11 +43,11 @@ class TextFormattingTree(sublime_plugin.TextCommand):
             # lines = [node['name'] or '']
             for (index, child) in enumerate(node['children']):
                 if index == len(node['children']) - 1:
-                    first = '└─╴'
-                    next_front = front + '   '
+                    first = '└── '
+                    next_front = front + '    '
                 else:
-                    first = '├─╴'
-                    next_front = front + '│  '
+                    first = '├── '
+                    next_front = front + '│   '
 
                 lines.append(front + first + render_tree(child, next_front))
             return '\n'.join(lines) + ('\n' if front == '' else '')
