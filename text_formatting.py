@@ -37,19 +37,21 @@ class TextFormattingTree(sublime_plugin.TextCommand):
 
             if node['name']:
                 lines = [node['name']]
+            elif front == '' and len(node['children']) == 1:
+                return render_tree(node['children'][0], '')
             else:
                 lines = ['.']
 
             # lines = [node['name'] or '']
             for (index, child) in enumerate(node['children']):
                 if index == len(node['children']) - 1:
-                    first = '└── '
+                    prefix = '└── '
                     next_front = front + '    '
                 else:
-                    first = '├── '
+                    prefix = '├── '
                     next_front = front + '│   '
 
-                lines.append(front + first + render_tree(child, next_front))
+                lines.append(front + prefix + render_tree(child, next_front))
             return '\n'.join(lines) + ('\n' if front == '' else '')
 
         # convert bulleted list into an tree
@@ -104,8 +106,9 @@ class TextFormattingTree(sublime_plugin.TextCommand):
             current_node['children'].append(node)
             prev_node = node
 
-        current_node, current_indent = flush(current_node, current_indent, 0, stack)
-        self.view.replace(edit, region, render_tree(current_node))
+        current_node, _ = flush(current_node, current_indent, 0, stack)
+        rendered_tree = render_tree(current_node)
+        self.view.replace(edit, region, rendered_tree)
 
 
 class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
