@@ -150,20 +150,17 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
             region = self.view.line(region)
 
         is_php = self.is_lang(region, 'source.php')
-        is_haskell = self.is_lang(region, 'source.haskell')
-        is_python = self.is_lang(region, 'source.python')
-        is_java = self.is_lang(region, 'source.python', 'source.Kotlin')
-        is_javascript = self.is_lang(region, 'source.ts', 'source.tsx', 'source.js')
+        is_double_dash = self.is_lang(region, 'source.haskell', 'source.extra')
+        is_octothorpe = self.is_lang(region, 'source.python')
+        is_cpp_ish = self.is_lang(region, 'source.python', 'source.Kotlin', 'source.ts', 'source.tsx', 'source.js')
 
         if is_php:
             indent_regex = re.compile(r'^\s*(#|//| \* )?\s*')
-        elif is_python:
+        elif is_octothorpe:
             indent_regex = re.compile(r'^\s*(#)?\s*')
-        elif is_java:
+        elif is_cpp_ish:
             indent_regex = re.compile(r'^\s*(\*|//|\\\*)?\s*')
-        elif is_javascript:
-            indent_regex = re.compile(r'^\s*(\*|//|\\\*)?\s*')
-        elif is_haskell:
+        elif is_double_dash:
             indent_regex = re.compile(r'^\s*(--)?\s*')
         else:
             indent_regex = re.compile(r'^\s*(#|//)?\s*')
