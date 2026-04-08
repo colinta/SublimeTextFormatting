@@ -193,6 +193,7 @@ class TextFormattingMaxlengthCommand(sublime_plugin.TextCommand):
 
         if initial_indent:
             lines = map(lambda line: line[len(initial_indent):], lines)
+            maxlength -= len(initial_indent)
 
         # combine sequential lines
         combined = []
