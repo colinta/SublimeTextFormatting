@@ -18,5 +18,12 @@
   {
     "caption": "TextFormatting - Sort lines or selections",
     "command": "text_formatting_sort"
+  },
+  {
+    "caption": "TextFormatting - Sort lines numerically",
+    "command": "text_formatting_sort",
+    "args": {
+      "numeric": true
+    }
   }
 ]

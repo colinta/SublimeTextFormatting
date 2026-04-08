@@ -276,13 +276,6 @@ class TextFormattingLineNumbers(sublime_plugin.TextCommand):
 
 
 
-def first_digits(line):
-    numeric_regex = re.compile(r'\A([^\d]*)(\d+)([^\d]*)\Z', re.DOTALL)
-    match = numeric_regex.match(line)
-    if not match:
-        return '0'
-    return match.group(2)
-
 class TextFormattingSort(sublime_plugin.TextCommand):
     def run(self, edit, case_sensitive=False, numeric=False):
         if len(self.view.sel()) == 1:
@@ -295,12 +288,19 @@ class TextFormattingSort(sublime_plugin.TextCommand):
         elif self.view.sel():
             self.sort(edit, [sel for sel in self.view.sel()], case_sensitive, numeric=numeric, did_select=False)
 
+    def first_digits(self, line):
+        numeric_regex = re.compile(r'\A\s*\$?([\d,]+)(?:\D.*)?\Z', re.DOTALL)
+        match = numeric_regex.match(line)
+        if not match:
+            return '0'
+        return match.group(1).replace(',', '')
+
     def sort(self, edit, selections, case_sensitive, numeric, did_select):
         max_digits = 0
         if numeric:
             for sel in selections:
                 line = self.view.substr(sel)
-                digits = first_digits(line)
+                digits = self.first_digits(line)
                 max_digits = max(max_digits, len(digits))
 
         def transform(region):
@@ -309,7 +309,7 @@ class TextFormattingSort(sublime_plugin.TextCommand):
             if not case_sensitive:
                 sort_text = sort_text.lower()
             if numeric:
-                digits = first_digits(line)
+                digits = self.first_digits(line)
                 sort_text = '0' * (max_digits - len(digits)) + digits
             return {
                 'region': region,
